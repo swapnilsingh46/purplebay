@@ -4,20 +4,23 @@ const path = require('path');
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 
-// Create a new listing
+// --------------------
+// CREATE LISTING (PROTECTED)
+// --------------------
 exports.createListing = async (req, res) => {
   try {
     const { title, description, price, category, images } = req.body;
-    if (!title || !price || !category)
-      return res.status(400).json({ msg: 'title, price, and category are required' });
+    if (!title || !price || !category) {
+      return res.status(400).json({ msg: 'Title, price, and category are required' });
+    }
 
     const listing = await Listing.create({
       title,
       description: description || '',
       price,
       category,
-      images: images || [], // expects array of image filenames or paths
-      createdBy: req.user._id
+      images: images || [],
+      createdBy: req.user._id,
     });
 
     res.status(201).json(listing);
@@ -27,22 +30,24 @@ exports.createListing = async (req, res) => {
   }
 };
 
-// Update a listing
+// --------------------
+// UPDATE LISTING (PROTECTED)
+// --------------------
 exports.updateListing = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id);
     if (!listing) return res.status(404).json({ msg: 'Listing not found' });
 
-    if (listing.createdBy.toString() !== req.user._id.toString())
+    if (listing.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({ msg: 'Not authorized' });
+    }
 
     const { title, description, price, category, images } = req.body;
-
     if (title !== undefined) listing.title = title;
     if (description !== undefined) listing.description = description;
     if (price !== undefined) listing.price = price;
     if (category !== undefined) listing.category = category;
-    if (images !== undefined) listing.images = images; // overwrite images array
+    if (images !== undefined) listing.images = images;
 
     await listing.save();
     res.json(listing);
@@ -52,17 +57,20 @@ exports.updateListing = async (req, res) => {
   }
 };
 
-// Delete a listing
+// --------------------
+// DELETE LISTING (PROTECTED)
+// --------------------
 exports.deleteListing = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id);
     if (!listing) return res.status(404).json({ msg: 'Listing not found' });
 
-    if (listing.createdBy.toString() !== req.user._id.toString())
+    if (listing.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({ msg: 'Not authorized' });
+    }
 
     // Delete images from uploads folder
-    if (listing.images && listing.images.length) {
+    if (listing.images?.length) {
       listing.images.forEach((img) => {
         const filePath = path.join(uploadsDir, img.split('/').pop());
         if (fs.existsSync(filePath)) {
@@ -79,8 +87,10 @@ exports.deleteListing = async (req, res) => {
   }
 };
 
-// Get all listings with optional filters and pagination
-exports.getListings = async (req, res) => {
+// --------------------
+// GET ALL LISTINGS (PUBLIC)
+// --------------------
+exports.getAllListings = async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, parseInt(req.query.limit) || 20);
@@ -98,22 +108,25 @@ exports.getListings = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
-      Listing.countDocuments(filter)
+      Listing.countDocuments(filter),
     ]);
 
     res.json({ items, page, total, pages: Math.ceil(total / limit) });
   } catch (err) {
-    console.error('getListings', err);
+    console.error('getAllListings', err);
     res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Get single listing by ID
+// --------------------
+// GET SINGLE LISTING BY ID (PUBLIC)
+// --------------------
 exports.getListingById = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id)
       .populate('category')
       .populate('createdBy', 'name email');
+
     if (!listing) return res.status(404).json({ msg: 'Listing not found' });
     res.json(listing);
   } catch (err) {
@@ -122,10 +135,14 @@ exports.getListingById = async (req, res) => {
   }
 };
 
-// Get listings created by logged-in user
+// --------------------
+// GET LISTINGS CREATED BY LOGGED-IN USER (PROTECTED)
+// --------------------
 exports.getMyListings = async (req, res) => {
   try {
-    const items = await Listing.find({ createdBy: req.user._id }).sort({ createdAt: -1 });
+    const items = await Listing.find({ createdBy: req.user._id })
+      .populate('category')
+      .sort({ createdAt: -1 });
     res.json(items);
   } catch (err) {
     console.error('getMyListings', err);
