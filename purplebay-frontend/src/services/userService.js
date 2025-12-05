@@ -1,54 +1,75 @@
 // src/services/userService.js
-import axios from "axios";
+import api from "./api"; // Use the pre-configured axios instance with VITE_API_URL
 
-const API_URL = "http://localhost:5000/api/users";
-const AUTH_URL = "http://localhost:5000/api/auth";
-const getToken = () => localStorage.getItem("token");
-
+// Function to get a user profile by user ID
 export const getUserProfile = async (id) => {
-  const token = getToken();
-  const res = await axios.get(`${API_URL}/${id}`, {
-    headers: { Authorization: `Bearer ${token}` }
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+
+  // Sends a GET request to /api/users/:id with Authorization header
+  const res = await api.get(`/users/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+
+  // Return the user object
   return res.data;
 };
 
+// Function to update a user's profile
 export const updateUserProfile = async (id, data) => {
-  const token = getToken();
-  const res = await axios.patch(`${API_URL}/${id}`, data, {
-    headers: { Authorization: `Bearer ${token}` }
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+
+  // Sends a PATCH request to /api/users/:id with updated profile data
+  const res = await api.patch(`/users/${id}`, data, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+
+  // Return the updated user object
   return res.data;
 };
 
 // ----------------------------
 // Avatar Upload Request
 // ----------------------------
+
+// Function to upload/update a user's avatar
 export const updateAvatar = async (id, file) => {
-  const token = getToken();
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+
+  // Prepare form data for file upload
   const formData = new FormData();
   formData.append("avatar", file);
 
-  const res = await axios.patch(`${API_URL}/${id}/avatar`, formData, {
+  // Sends a PATCH request to /api/users/:id/avatar with multipart/form-data
+  const res = await api.patch(`/users/${id}/avatar`, formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data"
-    }
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
   });
 
+  // Return the updated user object including avatar
   return res.data;
 };
 
 // ----------------------------
-// Get currently logged in user
+// Get currently logged-in user
 // ----------------------------
-export const getCurrentUserProfile = async () => {
-  const token = getToken();
-  if (!token) return null;
 
-  const res = await axios.get(`${AUTH_URL}/me`, {
-    headers: { Authorization: `Bearer ${token}` }
+// Function to get the profile of the currently logged-in user
+export const getCurrentUserProfile = async () => {
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+  if (!token) return null; // If no token, return null
+
+  // Sends a GET request to /api/auth/me to get current user profile
+  const res = await api.get("/auth/me", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+
+  // Return the current user object
   return res.data;
 };
 

@@ -6,7 +6,7 @@ import api from "../services/api";
 // Helper to build correct image URL
 const getImageUrl = (img) => {
   if (!img) return "/placeholder.png"; // Use placeholder when no image exists
-  if (img.startsWith("/uploads")) return `http://localhost:5000${img}`; // Local server images
+  if (img.startsWith("/uploads")) return `${import.meta.env.VITE_API_URL}${img}`; // Local server images
   return img; // External URLs
 };
 
@@ -14,12 +14,11 @@ export default function ListingDetails() {
   const { id } = useParams(); // Get listing ID from the URL
   const navigate = useNavigate();
 
-  // Component state
-  const [listing, setListing] = useState(null); // Stores listing data
-  const [loading, setLoading] = useState(true); // Controls loading state
-  const [error, setError] = useState(null); // Stores fetch errors
-  const [watching, setWatching] = useState(false); // Whether user is watching
-  const [watchlistId, setWatchlistId] = useState(null); // ID used for removal
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [watching, setWatching] = useState(false);
+  const [watchlistId, setWatchlistId] = useState(null);
 
   // Loads listing + watchlist status
   const fetchListing = async () => {
@@ -42,7 +41,6 @@ export default function ListingDetails() {
     }
   };
 
-  // Fetch listing when the component loads or ID changes
   useEffect(() => {
     fetchListing();
   }, [id]);
@@ -72,7 +70,6 @@ export default function ListingDetails() {
         },
       });
 
-      // Refresh data so UI stays updated
       await fetchListing();
     } catch (err) {
       console.error("BuyNow error:", err.response?.data || err.message);
@@ -80,19 +77,17 @@ export default function ListingDetails() {
     }
   };
 
-  // Adds the item to watchlist
   const handleAddWatchlist = async () => {
     try {
       const res = await api.post("/watchlist", { listingId: id });
       setWatching(true);
-      setWatchlistId(res.data._id); // Store watchlist entry ID
+      setWatchlistId(res.data._id);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.msg || "Failed to add to watchlist.");
     }
   };
 
-  // Removes item from watchlist
   const handleRemoveWatchlist = async () => {
     if (!watchlistId) return alert("Watchlist ID missing.");
 
@@ -106,7 +101,6 @@ export default function ListingDetails() {
     }
   };
 
-  // Loading + error handling UI
   if (loading) return <div className="text-center mt-5">Loading...</div>;
   if (error) return <div className="text-danger mt-4">{error}</div>;
   if (!listing) return <div className="mt-4">Listing not found.</div>;

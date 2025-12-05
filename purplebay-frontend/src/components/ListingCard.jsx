@@ -1,10 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+// Helper to build correct image URL
 const getImageUrl = (img) => {
-  if (!img) return "/placeholder.png";
-  if (img.startsWith("/uploads")) return `http://localhost:5000${img}`;
-  return img;
+  if (!img) return "/placeholder.png"; // fallback placeholder
+  if (img.startsWith("/uploads")) return `${import.meta.env.VITE_API_URL}${img}`; // Render/Vercel backend
+  return img; // external URLs
 };
 
 export default function ListingCard({ listing, onBuyNow }) {

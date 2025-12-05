@@ -1,13 +1,21 @@
 // src/services/paymentService.js
-import axios from "axios";
+import api from "./api"; // Use the pre-configured axios instance with VITE_API_URL
 
-const API_URL = "http://localhost:5000/api/payments";
-const getToken = () => localStorage.getItem("token");
-
+// Function to simulate a mock payment
 export const mockPayment = async (paymentData) => {
-  const token = getToken();
-  const res = await axios.post(`${API_URL}/mock`, paymentData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+
+  // Sends a POST request to /api/payments/mock with payment details
+  const res = await api.post(
+    "/payments/mock",
+    paymentData,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
+
+  // Return the payment response data
   return res.data;
 };
+

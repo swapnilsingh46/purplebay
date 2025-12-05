@@ -1,26 +1,41 @@
 // src/services/messageService.js
-import axios from "axios";
+import api from "./api"; // Use the pre-configured axios instance with VITE_API_URL
 
-const API_URL = "http://localhost:5000/api/messages";
-const getToken = () => localStorage.getItem("token");
-
-// GET messages between current user and another user (backend: GET /api/messages/:userId)
+// ----------------------------
+// GET messages between current user and another user
+// Backend endpoint: GET /api/messages/:userId
+// ----------------------------
 export const getMessagesWithUser = async (userId) => {
-  const token = getToken();
-  const res = await axios.get(`${API_URL}/${userId}`, {
-    headers: { Authorization: `Bearer ${token}` },
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+
+  // Sends a GET request to /api/messages/:userId
+  const res = await api.get(`/messages/${userId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+
+  // Return the array of messages
   return res.data;
 };
 
-// POST send a message (backend: POST /api/messages)
+// ----------------------------
+// POST send a message to another user
+// Backend endpoint: POST /api/messages
+// ----------------------------
 export const sendMessage = async (receiverId, text) => {
-  const token = getToken();
-  const res = await axios.post(
-    API_URL,
+  // Fetch the token from localStorage (required for authentication)
+  const token = localStorage.getItem("token");
+
+  // Sends a POST request to /api/messages with receiver ID and message text
+  const res = await api.post(
+    "/messages",
     { receiverId, text },
-    { headers: { Authorization: `Bearer ${token}` } }
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
   );
+
+  // Return the newly created message object
   return res.data;
 };
 
