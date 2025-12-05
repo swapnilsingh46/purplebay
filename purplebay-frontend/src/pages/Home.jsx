@@ -13,16 +13,15 @@ export default function Home() {
   const navigate = useNavigate();
 
   const [activeCategory, setActiveCategory] = useState("All");
-  const categories = ["Electronics", "Collectibles", "Fashion", "Home & Garden"]; // hardcoded categories for now
+  const categories = ["Electronics", "Collectibles", "Fashion", "Home & Garden"];
 
-  // Fetch listings from backend and update UI
+  // Fetch all listings from backend
   const fetchListings = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getAllListings();
-      const arr = Array.isArray(data) ? data : data.items || [];
-      setListings(arr);
+      setListings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("fetchListings error:", err);
       setError("Failed to load listings. Try again later.");
@@ -34,18 +33,18 @@ export default function Home() {
   // Load listings on mount and auto-refresh every 5 minutes
   useEffect(() => {
     fetchListings();
-    pollRef.current = setInterval(fetchListings, 300000); // 5-minute refresh interval
+    pollRef.current = setInterval(fetchListings, 300000);
     return () => clearInterval(pollRef.current);
   }, []);
 
-  // Filter listings based on the selected category
+  // Filter listings based on selected category
   const filteredListings = listings.filter(
     (l) =>
       activeCategory === "All" ||
       (l.category?.name ? l.category.name === activeCategory : false)
   );
 
-  // Handle Buy Now checkout process
+  // Handle Buy Now
   const handleBuyNow = async (listing) => {
     try {
       const shippingAddress = prompt("Enter shipping address:");
@@ -59,7 +58,6 @@ export default function Home() {
 
       const order = res.data.order;
 
-      // Navigate to mock payment screen
       navigate("/payments/mock", {
         state: {
           orderId: order._id,
@@ -68,7 +66,6 @@ export default function Home() {
         },
       });
 
-      // Mark listing as inactive locally
       setListings((prev) =>
         prev.map((l) => (l._id === listing._id ? { ...l, active: false } : l))
       );
@@ -80,14 +77,14 @@ export default function Home() {
 
   return (
     <div className="container my-4">
-      {/* Hero banner always visible even if listings are empty */}
+      {/* Hero Section */}
       <HeroSection
         categories={categories}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
       />
 
-      {/* Category filter section */}
+      {/* Category filter pills */}
       <div className="category-row mt-3 mb-4 d-flex gap-2 flex-wrap">
         <div
           className={`category-pill ${activeCategory === "All" ? "active" : ""}`}
@@ -95,7 +92,6 @@ export default function Home() {
         >
           All
         </div>
-
         {categories.map((cat) => (
           <div
             key={cat}
@@ -107,7 +103,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Listing grid & loading states */}
+      {/* Listings Grid */}
       {loading ? (
         <div className="text-center mt-5">Loading listings...</div>
       ) : error ? (
@@ -118,11 +114,7 @@ export default function Home() {
         <div className="row">
           {filteredListings.map((item) => (
             <div key={item._id} className="col-md-4 mb-4">
-              <ListingCard
-                listing={item}
-                onBuyNow={() => handleBuyNow(item)}
-                hideQuickView={true}
-              />
+              <ListingCard listing={item} onBuyNow={() => handleBuyNow(item)} />
             </div>
           ))}
         </div>
