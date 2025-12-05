@@ -3,7 +3,6 @@ import HeroSection from "../components/HeroSection";
 import ListingCard from "../components/ListingCard";
 import { getAllListings } from "../services/listingService";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
 
 export default function Home() {
   const [listings, setListings] = useState([]);
@@ -15,7 +14,6 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const categories = ["Electronics", "Collectibles", "Fashion", "Home & Garden"];
 
-  // Fetch all listings from backend
   const fetchListings = async () => {
     setLoading(true);
     setError(null);
@@ -30,22 +28,21 @@ export default function Home() {
     }
   };
 
-  // Load listings on mount and auto-refresh every 5 minutes
   useEffect(() => {
     fetchListings();
     pollRef.current = setInterval(fetchListings, 300000);
     return () => clearInterval(pollRef.current);
   }, []);
 
-  // Filter listings based on selected category
   const filteredListings = listings.filter(
-    (l) =>
-      activeCategory === "All" ||
-      (l.category?.name ? l.category.name === activeCategory : false)
+    (l) => activeCategory === "All" || l.category?.name === activeCategory
   );
 
-  // Handle Buy Now
   const handleBuyNow = async (listing) => {
+    // Protected, redirect to login if no token
+    const token = localStorage.getItem("token");
+    if (!token) return navigate("/login");
+
     try {
       const shippingAddress = prompt("Enter shipping address:");
       if (!shippingAddress) return alert("Shipping address is required.");
@@ -59,11 +56,7 @@ export default function Home() {
       const order = res.data.order;
 
       navigate("/payments/mock", {
-        state: {
-          orderId: order._id,
-          listingTitle: listing.title,
-          price: listing.price,
-        },
+        state: { orderId: order._id, listingTitle: listing.title, price: listing.price },
       });
 
       setListings((prev) =>
@@ -77,14 +70,12 @@ export default function Home() {
 
   return (
     <div className="container my-4">
-      {/* Hero Section */}
       <HeroSection
         categories={categories}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
       />
 
-      {/* Category filter pills */}
       <div className="category-row mt-3 mb-4 d-flex gap-2 flex-wrap">
         <div
           className={`category-pill ${activeCategory === "All" ? "active" : ""}`}
@@ -103,7 +94,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Listings Grid */}
       {loading ? (
         <div className="text-center mt-5">Loading listings...</div>
       ) : error ? (
