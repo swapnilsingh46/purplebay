@@ -10,9 +10,9 @@ const app = express();
 // MIDDLEWARES
 // --------------------
 
-// Enable CORS for frontend
+// Enable CORS for frontend (local + production)
 app.use(cors({
-  origin: 'http://localhost:5173', // your frontend URL
+  origin: ['http://localhost:5173', 'https://purplebay.vercel.app'], 
   credentials: true,               // allow cookies/auth headers
 }));
 
